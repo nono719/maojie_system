@@ -17,7 +17,7 @@ const onSubmit = async () => {
     const data = await login(form)
     userStore.setLogin(data)
     message.success('登录成功')
-    router.push(data.role === 'DOCTOR' ? '/doctor' : '/patient')
+    router.push(data.role === 'USER' ? '/patient' : '/doctor')
   } finally {
     loading.value = false
   }

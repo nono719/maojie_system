@@ -19,7 +19,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/doctor")
-@PreAuthorize("hasRole('DOCTOR')")
+@PreAuthorize("hasAnyRole('DOCTOR','ADMIN')")
 @RequiredArgsConstructor
 public class DoctorController {
 

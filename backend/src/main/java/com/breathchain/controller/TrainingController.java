@@ -34,7 +34,7 @@ public class TrainingController {
         return Result.success(trainingService.myHistory(SecurityUtils.currentUserId()));
     }
 
-    @PreAuthorize("hasRole('DOCTOR')")
+    @PreAuthorize("hasAnyRole('DOCTOR','ADMIN')")
     @GetMapping("/history/{patientId}")
     public Result<List<TrainingRecord>> patientHistory(@PathVariable Long patientId) {
         return Result.success(

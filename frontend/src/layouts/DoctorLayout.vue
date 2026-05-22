@@ -18,7 +18,7 @@ const logout = () => {
 <template>
   <a-layout style="min-height:100vh;">
     <a-layout-sider theme="dark" width="220">
-      <div class="logo">BreathChain · 医生端</div>
+      <div class="logo">BreathChain · {{ userStore.isAdmin ? '管理端' : '医生端' }}</div>
       <a-menu mode="inline" theme="dark" :selected-keys="selectedKey">
         <a-menu-item key="dashboard" @click="router.push('/doctor/dashboard')">数据概览</a-menu-item>
         <a-menu-item key="tasks"     @click="router.push('/doctor/tasks')">任务管理</a-menu-item>
@@ -27,7 +27,7 @@ const logout = () => {
     </a-layout-sider>
     <a-layout>
       <a-layout-header class="header">
-        <span>欢迎，{{ userStore.realName || userStore.username }} 医生</span>
+        <span>欢迎，{{ userStore.realName || userStore.username }} {{ userStore.isAdmin ? '管理员' : '医生' }}</span>
         <a-button type="link" @click="logout">退出登录</a-button>
       </a-layout-header>
       <a-layout-content class="page-container">
