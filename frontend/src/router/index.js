@@ -28,6 +28,7 @@ const routes = [
       { path: 'dashboard', component: () => import('@/views/admin/Dashboard.vue') },
       { path: 'users',     component: () => import('@/views/admin/Users.vue') },
       { path: 'doctors',   component: () => import('@/views/admin/Doctors.vue') },
+      { path: 'requests',  component: () => import('@/views/admin/Requests.vue') },
       { path: 'records',   component: () => import('@/views/admin/Records.vue') },
       { path: 'chain',     component: () => import('@/views/admin/Chain.vue') }
     ]
@@ -41,7 +42,8 @@ const routes = [
       { path: '', redirect: '/doctor/dashboard' },
       { path: 'dashboard', component: () => import('@/views/doctor/Dashboard.vue') },
       { path: 'tasks',     component: () => import('@/views/doctor/TaskManage.vue') },
-      { path: 'patients',  component: () => import('@/views/doctor/Patients.vue') }
+      { path: 'patients',  component: () => import('@/views/doctor/Patients.vue') },
+      { path: 'requests',  component: () => import('@/views/doctor/Requests.vue') }
     ]
   },
 

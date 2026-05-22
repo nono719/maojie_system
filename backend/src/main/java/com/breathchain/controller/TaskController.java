@@ -8,6 +8,7 @@ import com.breathchain.entity.TaskAssignment;
 import com.breathchain.mapper.BreathingTaskMapper;
 import com.breathchain.mapper.TaskAssignmentMapper;
 import com.breathchain.security.SecurityUtils;
+import com.breathchain.service.DoctorAuthGuard;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,10 +23,12 @@ public class TaskController {
 
     private final BreathingTaskMapper taskMapper;
     private final TaskAssignmentMapper assignmentMapper;
+    private final DoctorAuthGuard doctorGuard;
 
     @PreAuthorize("hasRole('DOCTOR')")
     @PostMapping
     public Result<BreathingTask> createTask(@Valid @RequestBody TaskCreateDTO dto) {
+        doctorGuard.requireCertified();
         BreathingTask task = new BreathingTask();
         org.springframework.beans.BeanUtils.copyProperties(dto, task);
         task.setDoctorId(SecurityUtils.currentUserId());
@@ -37,6 +40,7 @@ public class TaskController {
     @PreAuthorize("hasRole('DOCTOR')")
     @PutMapping("/{id}/publish")
     public Result<Void> publish(@PathVariable Long id) {
+        doctorGuard.requireCertified();
         BreathingTask task = taskMapper.selectById(id);
         if (task != null && task.getDoctorId().equals(SecurityUtils.currentUserId())) {
             task.setStatus("PUBLISHED");
@@ -58,6 +62,7 @@ public class TaskController {
     @PreAuthorize("hasRole('DOCTOR')")
     @PostMapping("/{taskId}/assign/{patientId}")
     public Result<TaskAssignment> assign(@PathVariable Long taskId, @PathVariable Long patientId) {
+        doctorGuard.requireCertified();
         TaskAssignment a = new TaskAssignment();
         a.setTaskId(taskId);
         a.setUserId(patientId);

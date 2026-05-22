@@ -2,11 +2,14 @@
 import { RouterView, useRouter, useRoute } from 'vue-router'
 import { computed } from 'vue'
 import AppHeader from '@/components/AppHeader.vue'
+import { useUserStore } from '@/store/user'
 
 const router = useRouter()
 const route = useRoute()
+const userStore = useUserStore()
 
 const selectedKey = computed(() => [route.path.split('/')[2] || 'dashboard'])
+const pendingReview = computed(() => userStore.role === 'DOCTOR' && userStore.certified === false)
 </script>
 
 <template>
@@ -21,13 +24,21 @@ const selectedKey = computed(() => [route.path.split('/')[2] || 'dashboard'])
       </div>
       <a-menu mode="inline" theme="dark" :selected-keys="selectedKey">
         <a-menu-item key="dashboard" @click="router.push('/doctor/dashboard')">📊 数据概览</a-menu-item>
-        <a-menu-item key="tasks"     @click="router.push('/doctor/tasks')">📝 任务管理</a-menu-item>
-        <a-menu-item key="patients"  @click="router.push('/doctor/patients')">👥 患者管理</a-menu-item>
+        <a-menu-item key="tasks"     @click="router.push('/doctor/tasks')" :disabled="pendingReview">📝 任务管理</a-menu-item>
+        <a-menu-item key="patients"  @click="router.push('/doctor/patients')" :disabled="pendingReview">👥 患者管理</a-menu-item>
+        <a-menu-item key="requests"  @click="router.push('/doctor/requests')" :disabled="pendingReview">🤝 患者分配申请</a-menu-item>
       </a-menu>
     </a-layout-sider>
     <a-layout>
       <AppHeader greeting="临床康复管理 · 数据可信存证" />
       <a-layout-content>
+        <a-alert v-if="pendingReview"
+          type="warning" show-icon
+          message="您的医生资质正在等待管理员审核"
+          description="审核通过前，您可以浏览界面但无法创建任务、分配患者等操作。"
+          banner
+          style="margin: 16px 24px 0;"
+        />
         <RouterView />
       </a-layout-content>
     </a-layout>

@@ -220,10 +220,74 @@ public class AdminController {
 
     // ---------- 训练记录审计 ----------
     @GetMapping("/training-records")
-    public List<TrainingRecord> listRecords() {
-        return recordMapper.selectList(
+    public List<Map<String, Object>> listRecords() {
+        List<TrainingRecord> records = recordMapper.selectList(
             Wrappers.<TrainingRecord>lambdaQuery().orderByDesc(TrainingRecord::getCreateTime)
         );
+        return records.stream().map(r -> {
+            Map<String, Object> row = new HashMap<>();
+            row.put("id", r.getId());
+            row.put("userId", r.getUserId());
+            row.put("taskId", r.getTaskId());
+            row.put("duration", r.getDuration());
+            row.put("breathCount", r.getBreathCount());
+            row.put("completionRate", r.getCompletionRate());
+            row.put("score", r.getScore());
+            row.put("heartRate", r.getHeartRate());
+            row.put("dataHash", r.getDataHash());
+            row.put("blockTxId", r.getBlockTxId());
+            row.put("chainStatus", r.getChainStatus());
+            row.put("createTime", r.getCreateTime());
+            SysUser u = userMapper.selectById(r.getUserId());
+            row.put("username", u != null ? u.getUsername() : null);
+            row.put("userRealName", u != null ? u.getRealName() : null);
+            BreathingTask t = taskMapper.selectById(r.getTaskId());
+            row.put("taskName", t != null ? t.getTaskName() : null);
+            return row;
+        }).toList();
+    }
+
+    @GetMapping("/training-records/{id}/detail")
+    public Map<String, Object> recordDetail(@PathVariable Long id) {
+        TrainingRecord r = recordMapper.selectById(id);
+        if (r == null) throw new BusinessException(ResultCode.TRAINING_RECORD_NOT_FOUND);
+        SysUser u = userMapper.selectById(r.getUserId());
+        BreathingTask t = taskMapper.selectById(r.getTaskId());
+
+        // 顺带查链上一致性
+        Boolean verified = null;
+        try {
+            if (r.getDataHash() != null) {
+                org.web3j.abi.datatypes.Function fn = new org.web3j.abi.datatypes.Function(
+                    "verifyRecord",
+                    java.util.List.of(
+                        new org.web3j.abi.datatypes.generated.Uint256(java.math.BigInteger.valueOf(r.getId())),
+                        new org.web3j.abi.datatypes.generated.Bytes32(org.web3j.utils.Numeric.hexStringToByteArray(r.getDataHash()))
+                    ),
+                    java.util.List.of(new org.web3j.abi.TypeReference<org.web3j.abi.datatypes.Bool>() {})
+                );
+                String encoded = org.web3j.abi.FunctionEncoder.encode(fn);
+                org.web3j.protocol.core.methods.response.EthCall response = web3j.ethCall(
+                    org.web3j.protocol.core.methods.request.Transaction.createEthCallTransaction(
+                        serviceCredentials.getAddress(),
+                        web3Config.getTrainingRecordAddress(),
+                        encoded),
+                    org.web3j.protocol.core.DefaultBlockParameterName.LATEST
+                ).send();
+                if (!response.hasError()) {
+                    java.util.List<org.web3j.abi.datatypes.Type> decoded =
+                        org.web3j.abi.FunctionReturnDecoder.decode(response.getValue(), fn.getOutputParameters());
+                    if (!decoded.isEmpty()) verified = (Boolean) decoded.get(0).getValue();
+                }
+            }
+        } catch (Exception ex) { /* 链不通时 verified 保持 null */ }
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("record", r);
+        data.put("user", u);
+        data.put("task", t);
+        data.put("chainVerified", verified);
+        return data;
     }
 
     // ---------- 区块链状态 ----------

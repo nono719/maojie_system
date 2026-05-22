@@ -37,24 +37,33 @@ public class AuthServiceImpl implements AuthService {
         if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
             throw new BusinessException(ResultCode.WRONG_PASSWORD);
         }
-        // 医生：未审核 → 友好提示「待审核」而不是泛泛的「已停用」
+        // 医生：被驳回 → 拒绝；待审核 → 允许登录但只能看页面，不能操作
+        Boolean certified = null;
         if ("DOCTOR".equals(user.getRole())) {
             DoctorProfile profile = doctorMapper.selectOne(
                 Wrappers.<DoctorProfile>lambdaQuery().eq(DoctorProfile::getUserId, user.getId())
             );
-            if (profile != null && profile.getCertified() != null && profile.getCertified() == 0) {
-                throw new BusinessException(ResultCode.DOCTOR_PENDING_REVIEW);
+            if (profile != null) {
+                Integer c = profile.getCertified();
+                if (c != null && c < 0) {
+                    throw new BusinessException(ResultCode.DOCTOR_REJECTED);
+                }
+                certified = c != null && c == 1;
+            } else {
+                certified = false;
             }
         }
-        if (user.getStatus() == null || user.getStatus() != 1) {
+        // 非医生角色：维持原状态检查；医生未认证不算 disabled
+        if (!"DOCTOR".equals(user.getRole()) && (user.getStatus() == null || user.getStatus() != 1)) {
             throw new BusinessException(ResultCode.ACCOUNT_DISABLED);
         }
-        return buildLoginVO(user);
+        return buildLoginVO(user, certified);
     }
 
     @Override
     @Transactional
     public LoginVO register(RegisterDTO dto) {
+        // 用一段精确的查重（数据库唯一约束才是最终保险）
         Long count = userMapper.selectCount(
             Wrappers.<SysUser>lambdaQuery().eq(SysUser::getUsername, dto.getUsername())
         );
@@ -89,6 +98,10 @@ public class AuthServiceImpl implements AuthService {
             if (dto.getLicenseNo() == null || dto.getLicenseNo().isBlank()) {
                 throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "医生注册必须提供执业证书编号");
             }
+            // 医生注册即启用账户（status=1）+ certified=0；登录可进医生端但功能受限
+            user.setStatus(1);
+            userMapper.updateById(user);
+
             DoctorProfile profile = new DoctorProfile();
             profile.setUserId(user.getId());
             profile.setLicenseNo(dto.getLicenseNo());
@@ -97,19 +110,12 @@ public class AuthServiceImpl implements AuthService {
             profile.setTitle(dto.getTitle());
             profile.setCertified(0);
             doctorMapper.insert(profile);
-            // 不返回 token — 等待审核
-            return LoginVO.builder()
-                .userId(user.getId())
-                .username(user.getUsername())
-                .realName(user.getRealName())
-                .role(user.getRole())
-                .expireMillis(0)
-                .build();
+            return buildLoginVO(user, false);
         }
-        return buildLoginVO(user);
+        return buildLoginVO(user, null);
     }
 
-    private LoginVO buildLoginVO(SysUser user) {
+    private LoginVO buildLoginVO(SysUser user, Boolean certified) {
         String token = jwtUtil.generate(user.getId(), user.getUsername(), user.getRole());
         return LoginVO.builder()
             .token(token)
@@ -118,6 +124,7 @@ public class AuthServiceImpl implements AuthService {
             .realName(user.getRealName())
             .role(user.getRole())
             .walletAddress(user.getWalletAddress())
+            .certified(certified)
             .expireMillis(jwtUtil.getExpireMillis())
             .build();
     }

@@ -1,25 +1,35 @@
 import { defineStore } from 'pinia'
 
+// 用 sessionStorage 实现 per-tab 隔离 — 不同标签页可以同时登录不同角色
 const STORAGE_KEY = 'breathchain.user'
+
+const readCached = () => {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY)
+    return raw ? JSON.parse(raw) : {}
+  } catch (_) { return {} }
+}
 
 export const useUserStore = defineStore('user', {
   state: () => {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    const cached = raw ? JSON.parse(raw) : {}
+    const cached = readCached()
     return {
       token: cached.token || '',
       userId: cached.userId || null,
       username: cached.username || '',
       realName: cached.realName || '',
       role: cached.role || '',
-      walletAddress: cached.walletAddress || ''
+      walletAddress: cached.walletAddress || '',
+      certified: cached.certified // 仅医生有意义；true/false/undefined
     }
   },
   getters: {
     isLogin: (state) => !!state.token,
     isDoctor: (state) => state.role === 'DOCTOR',
     isPatient: (state) => state.role === 'USER',
-    isAdmin: (state) => state.role === 'ADMIN'
+    isAdmin: (state) => state.role === 'ADMIN',
+    /** 医生是否通过认证（非医生角色返回 true） */
+    isCertified: (state) => state.role !== 'DOCTOR' || state.certified === true
   },
   actions: {
     setLogin(payload) {
@@ -29,7 +39,8 @@ export const useUserStore = defineStore('user', {
       this.realName = payload.realName
       this.role = payload.role
       this.walletAddress = payload.walletAddress
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
+      this.certified = payload.certified
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
     },
     logout() {
       this.token = ''
@@ -38,7 +49,8 @@ export const useUserStore = defineStore('user', {
       this.realName = ''
       this.role = ''
       this.walletAddress = ''
-      localStorage.removeItem(STORAGE_KEY)
+      this.certified = undefined
+      sessionStorage.removeItem(STORAGE_KEY)
     }
   }
 })

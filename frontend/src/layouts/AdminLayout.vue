@@ -23,6 +23,7 @@ const selectedKey = computed(() => [route.path.split('/')[2] || 'dashboard'])
         <a-menu-item key="dashboard" @click="router.push('/admin/dashboard')">📊 数据概览</a-menu-item>
         <a-menu-item key="users"     @click="router.push('/admin/users')">👥 用户管理</a-menu-item>
         <a-menu-item key="doctors"   @click="router.push('/admin/doctors')">🩺 医生审核</a-menu-item>
+        <a-menu-item key="requests"  @click="router.push('/admin/requests')">🤝 患者分配</a-menu-item>
         <a-menu-item key="records"   @click="router.push('/admin/records')">📋 记录审计</a-menu-item>
         <a-menu-item key="chain"     @click="router.push('/admin/chain')">⛓ 区块链状态</a-menu-item>
       </a-menu>

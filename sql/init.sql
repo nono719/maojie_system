@@ -157,6 +157,26 @@ CREATE TABLE user_token_balance (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户代币余额缓存';
 
 -- ---------------------------------------------------------------------
+-- 患者分配申请 patient_assignment_request（医生发起，管理员审批）
+-- ---------------------------------------------------------------------
+DROP TABLE IF EXISTS patient_assignment_request;
+CREATE TABLE patient_assignment_request (
+    id              BIGINT          NOT NULL AUTO_INCREMENT,
+    doctor_id       BIGINT          NOT NULL                COMMENT '发起申请的医生',
+    patient_id      BIGINT          NOT NULL                COMMENT '目标患者',
+    reason          VARCHAR(500)    DEFAULT NULL            COMMENT '申请理由',
+    status          VARCHAR(20)     NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING/APPROVED/REJECTED',
+    processed_by    BIGINT          DEFAULT NULL            COMMENT '处理的管理员',
+    processed_time  DATETIME        DEFAULT NULL,
+    create_time     DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time     DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_status (status),
+    KEY idx_doctor (doctor_id),
+    KEY idx_patient (patient_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='患者分配申请';
+
+-- ---------------------------------------------------------------------
 -- 8. 操作审计日志 sys_audit_log (论文 4.5 非功能要求)
 -- ---------------------------------------------------------------------
 DROP TABLE IF EXISTS sys_audit_log;
