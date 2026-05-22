@@ -33,7 +33,7 @@ const onSubmit = async () => {
   <div class="register-page">
     <div class="register-card">
       <h2 style="text-align:center;margin-bottom:24px;">注册账户</h2>
-      <a-form layout="vertical" @finish="onSubmit">
+      <a-form :model="form" layout="vertical" @finish="onSubmit">
         <a-form-item label="角色">
           <a-radio-group v-model:value="form.role" button-style="solid">
             <a-radio-button value="USER">患者</a-radio-button>
@@ -73,7 +73,7 @@ const onSubmit = async () => {
           </a-row>
         </template>
 
-        <a-button type="primary" html-type="submit" block :loading="loading">注 册</a-button>
+        <a-button type="primary" html-type="submit" block :loading="loading" @click="onSubmit">注 册</a-button>
         <div style="margin-top:14px;text-align:center;">
           已有账户？<router-link to="/login">直接登录</router-link>
         </div>

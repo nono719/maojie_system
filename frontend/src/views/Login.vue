@@ -32,14 +32,14 @@ const onSubmit = async () => {
         <h1>BreathChain</h1>
         <p>基于区块链的呼吸训练干预系统</p>
       </div>
-      <a-form layout="vertical" @finish="onSubmit">
-        <a-form-item label="用户名">
-          <a-input v-model:value="form.username" placeholder="请输入用户名" allow-clear />
+      <a-form :model="form" layout="vertical" @finish="onSubmit">
+        <a-form-item label="用户名" name="username">
+          <a-input v-model:value="form.username" placeholder="请输入用户名" allow-clear @pressEnter="onSubmit" />
         </a-form-item>
-        <a-form-item label="密码">
-          <a-input-password v-model:value="form.password" placeholder="请输入密码" />
+        <a-form-item label="密码" name="password">
+          <a-input-password v-model:value="form.password" placeholder="请输入密码" @pressEnter="onSubmit" />
         </a-form-item>
-        <a-button type="primary" html-type="submit" block :loading="loading">登 录</a-button>
+        <a-button type="primary" html-type="submit" block :loading="loading" @click="onSubmit">登 录</a-button>
         <div class="footer">
           还没有账户？<router-link to="/register">立即注册</router-link>
         </div>
