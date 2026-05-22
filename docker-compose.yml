@@ -14,7 +14,7 @@ services:
       MYSQL_PASSWORD: breathchain123
       TZ: Asia/Shanghai
     ports:
-      - "3306:3306"
+      - "13306:3306"
     command: >
       --character-set-server=utf8mb4
       --collation-server=utf8mb4_unicode_ci
@@ -29,11 +29,11 @@ services:
       retries: 5
 
   redis:
-    image: redis:6.2-alpine
+    image: redis:7-alpine
     container_name: breathchain-redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "16379:6379"
     volumes:
       - redis_data:/data
     healthcheck:

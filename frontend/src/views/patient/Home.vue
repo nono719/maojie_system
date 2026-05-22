@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, ref } from 'vue'
-import { patientHome, assignedTasks } from '@/api/training'
+import { patientHome } from '@/api/training'
 import { assignedTasks as fetchAssigned } from '@/api/task'
 import { useRouter } from 'vue-router'
 

@@ -24,3 +24,9 @@ target/
 
 # Solidity build artifacts
 contracts/build/
+
+# FISCO BCOS chain runtime (节点数据/日志/CA 等，不入库)
+fisco/
+
+# Vite auto-generated
+frontend/components.d.ts

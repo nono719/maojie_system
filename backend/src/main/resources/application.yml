@@ -5,7 +5,7 @@ spring:
     name: breathchain-backend
 
 server:
-  port: 8080
+  port: 18080
   servlet:
     context-path: /api
 
@@ -33,14 +33,14 @@ breathchain:
     allowed-origins: http://localhost:5173,http://localhost:3000
   blockchain:
     enabled: true
-    node-url: http://127.0.0.1:8545
-    chain-id: 1
+    node-url: http://127.0.0.1:18545
+    chain-id: 20200
     gas-price: 1000000000
     gas-limit: 6721975
     # 由 setAwarder/setSubmitter 加入白名单的后端服务账户私钥（务必使用环境变量）
-    service-private-key: ${BREATHCHAIN_SERVICE_KEY:0x0000000000000000000000000000000000000000000000000000000000000001}
-    breath-token-address: ${BREATH_TOKEN_ADDR:}
-    training-record-address: ${TRAINING_RECORD_ADDR:}
+    service-private-key: ${BREATHCHAIN_SERVICE_KEY:0x8f3af6f123719a381dc5cd0649968f9b438b0a2b1ea47c2dcee9763c9e048a33}
+    breath-token-address: ${BREATH_TOKEN_ADDR:0xEfBCA72429B4486C0172A4BF5426e2804028f025}
+    training-record-address: ${TRAINING_RECORD_ADDR:0x54d59788Eb732d80cf66D756a1eAD3F7a64B6A6E}
 
 logging:
   level:
