@@ -129,18 +129,52 @@ loadTask()
       <a-button v-if="status === 'done'"    type="primary" size="large" @click="router.push('/patient/home')">返回首页</a-button>
     </div>
 
-    <a-modal :open="!!result" :footer="null" title="训练完成" @cancel="result = null">
-      <a-result status="success" title="本次训练已记录" sub-title="数据已写入区块链并发放奖励">
-        <template #extra>
-          <div class="result">
-            <p>训练记录 ID：<strong>{{ result.recordId }}</strong></p>
-            <p>数据哈希：<code>{{ result.dataHash }}</code></p>
-            <p>上链状态：<a-tag :color="result.chainStatus === 'SUCCESS' ? 'green' : 'orange'">{{ result.chainStatus }}</a-tag></p>
-            <p v-if="result.blockTxId">区块链交易：<code>{{ result.blockTxId }}</code></p>
-            <p v-if="result.rewardAmount">奖励：<a-tag color="gold">{{ result.rewardAmount }} BREATH</a-tag></p>
+    <a-modal :open="!!result" :footer="null" title="训练完成" :width="560" @cancel="result = null">
+      <div v-if="result" class="result-modal">
+        <div class="reward-banner" v-if="result.rewardAmount > 0">
+          <div class="reward-amount">+{{ result.rewardAmount }} <span class="unit">BREATH</span></div>
+          <div class="reward-label">本次奖励到账 🎉</div>
+        </div>
+        <div class="reward-banner skipped" v-else>
+          <div class="reward-amount">未发奖</div>
+          <div class="reward-label">{{ result.rewardReasons?.[0] || '完成率不足，请继续努力' }}</div>
+        </div>
+
+        <div class="result-block">
+          <div class="block-title">奖励明细</div>
+          <div v-if="result.rewardBase != null" class="reward-row">
+            <span class="key">任务基础奖励</span>
+            <span class="val">{{ result.rewardBase }} BREATH</span>
           </div>
-        </template>
-      </a-result>
+          <div v-if="result.streakDays != null" class="reward-row">
+            <span class="key">连续打卡</span>
+            <span class="val">{{ result.streakDays }} 天</span>
+          </div>
+          <ul class="reasons" v-if="result.rewardReasons?.length">
+            <li v-for="(r, i) in result.rewardReasons" :key="i">{{ r }}</li>
+          </ul>
+        </div>
+
+        <div class="result-block">
+          <div class="block-title">上链信息</div>
+          <div class="reward-row">
+            <span class="key">记录ID</span>
+            <span class="val">#{{ result.recordId }}</span>
+          </div>
+          <div class="reward-row">
+            <span class="key">上链状态</span>
+            <a-tag :color="result.chainStatus === 'SUCCESS' ? 'green' : 'orange'">{{ result.chainStatus }}</a-tag>
+          </div>
+          <div class="reward-row">
+            <span class="key">数据哈希</span>
+            <code class="hash">{{ result.dataHash?.slice(0, 22) }}...</code>
+          </div>
+          <div class="reward-row" v-if="result.blockTxId">
+            <span class="key">交易哈希</span>
+            <code class="hash">{{ result.blockTxId.slice(0, 22) }}...</code>
+          </div>
+        </div>
+      </div>
     </a-modal>
   </div>
 </template>
@@ -186,4 +220,56 @@ loadTask()
 
 .actions { margin-top: 12px; }
 .result p { margin: 6px 0; word-break: break-all; }
+
+/* Result Modal */
+.result-modal { text-align: left; }
+.reward-banner {
+  background: linear-gradient(135deg, #fa8c16 0%, #d46b08 100%);
+  color: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  margin-bottom: 16px;
+  box-shadow: 0 6px 18px rgba(250, 140, 22, 0.3);
+}
+.reward-banner.skipped {
+  background: linear-gradient(135deg, #bfbfbf, #8c8c8c);
+  box-shadow: 0 6px 18px rgba(140, 140, 140, 0.3);
+}
+.reward-amount { font-size: 36px; font-weight: 700; line-height: 1; }
+.reward-amount .unit { font-size: 16px; opacity: 0.9; margin-left: 4px; }
+.reward-label { font-size: 13px; opacity: 0.9; margin-top: 6px; }
+
+.result-block {
+  background: #fafbfc;
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 12px;
+}
+.block-title {
+  font-size: 13px; font-weight: 600;
+  color: var(--color-text-light);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.reward-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 0; font-size: 14px;
+}
+.reward-row .key { color: var(--color-text-light); }
+.reward-row .val { font-weight: 600; color: var(--color-text); }
+.hash { font-family: ui-monospace, monospace; font-size: 12px; color: var(--brand-primary); }
+.reasons {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #fff;
+  border-radius: 6px;
+  border-left: 3px solid var(--brand-primary);
+  font-size: 12px;
+  color: var(--color-text-light);
+  line-height: 1.7;
+  list-style: none;
+}
+.reasons li::before { content: '✓ '; color: var(--brand-primary); margin-right: 4px; }
 </style>

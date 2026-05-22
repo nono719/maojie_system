@@ -15,4 +15,7 @@ public interface TrainingService {
 
     /** 医生端：查看某患者的训练历史 */
     List<TrainingRecord> patientHistory(Long doctorId, Long patientId);
+
+    /** 计算用户当前的连续打卡天数（含今天） */
+    int streakDays(Long userId);
 }

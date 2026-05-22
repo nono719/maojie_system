@@ -72,6 +72,50 @@ public class AdminController {
         return data;
     }
 
+    // ---------- 最近 N 天趋势 ----------
+    @GetMapping("/trend")
+    public Map<String, Object> trend(@RequestParam(defaultValue = "7") int days) {
+        java.time.LocalDate today = java.time.LocalDate.now();
+        java.time.LocalDate start = today.minusDays(days - 1);
+
+        List<TrainingRecord> recent = recordMapper.selectList(
+            Wrappers.<TrainingRecord>lambdaQuery()
+                .ge(TrainingRecord::getCreateTime, start.atStartOfDay())
+        );
+        List<RewardRecord> recentRewards = rewardMapper.selectList(
+            Wrappers.<RewardRecord>lambdaQuery()
+                .ge(RewardRecord::getCreateTime, start.atStartOfDay())
+                .eq(RewardRecord::getStatus, "SUCCESS")
+        );
+
+        java.util.List<String> labels = new java.util.ArrayList<>();
+        java.util.List<Integer> records = new java.util.ArrayList<>();
+        java.util.List<BigDecimal> rewards = new java.util.ArrayList<>();
+        for (int i = 0; i < days; i++) {
+            java.time.LocalDate d = start.plusDays(i);
+            labels.add(d.toString().substring(5));
+
+            int cnt = 0;
+            for (TrainingRecord r : recent) {
+                if (r.getCreateTime() != null && r.getCreateTime().toLocalDate().equals(d)) cnt++;
+            }
+            records.add(cnt);
+
+            BigDecimal sum = BigDecimal.ZERO;
+            for (RewardRecord r : recentRewards) {
+                if (r.getCreateTime() != null && r.getCreateTime().toLocalDate().equals(d)) {
+                    sum = sum.add(r.getAmount());
+                }
+            }
+            rewards.add(sum);
+        }
+        Map<String, Object> out = new HashMap<>();
+        out.put("labels", labels);
+        out.put("records", records);
+        out.put("rewards", rewards);
+        return out;
+    }
+
     // ---------- 用户管理 ----------
     @GetMapping("/users")
     public List<SysUser> listUsers() {
