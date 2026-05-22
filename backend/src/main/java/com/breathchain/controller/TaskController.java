@@ -23,7 +23,7 @@ public class TaskController {
     private final BreathingTaskMapper taskMapper;
     private final TaskAssignmentMapper assignmentMapper;
 
-    @PreAuthorize("hasAnyRole('DOCTOR','ADMIN')")
+    @PreAuthorize("hasRole('DOCTOR')")
     @PostMapping
     public Result<BreathingTask> createTask(@Valid @RequestBody TaskCreateDTO dto) {
         BreathingTask task = new BreathingTask();
@@ -34,7 +34,7 @@ public class TaskController {
         return Result.success(task);
     }
 
-    @PreAuthorize("hasAnyRole('DOCTOR','ADMIN')")
+    @PreAuthorize("hasRole('DOCTOR')")
     @PutMapping("/{id}/publish")
     public Result<Void> publish(@PathVariable Long id) {
         BreathingTask task = taskMapper.selectById(id);
@@ -45,7 +45,7 @@ public class TaskController {
         return Result.success();
     }
 
-    @PreAuthorize("hasAnyRole('DOCTOR','ADMIN')")
+    @PreAuthorize("hasRole('DOCTOR')")
     @GetMapping("/mine")
     public Result<List<BreathingTask>> myTasks() {
         return Result.success(taskMapper.selectList(
@@ -55,7 +55,7 @@ public class TaskController {
         ));
     }
 
-    @PreAuthorize("hasAnyRole('DOCTOR','ADMIN')")
+    @PreAuthorize("hasRole('DOCTOR')")
     @PostMapping("/{taskId}/assign/{patientId}")
     public Result<TaskAssignment> assign(@PathVariable Long taskId, @PathVariable Long patientId) {
         TaskAssignment a = new TaskAssignment();

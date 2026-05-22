@@ -18,16 +18,21 @@ const logout = () => {
 <template>
   <a-layout style="min-height:100vh;">
     <a-layout-sider theme="dark" width="220">
-      <div class="logo">BreathChain · 医生端</div>
+      <div class="logo">
+        <span class="badge">ADMIN</span>
+        <div class="title">BreathChain · 管理端</div>
+      </div>
       <a-menu mode="inline" theme="dark" :selected-keys="selectedKey">
-        <a-menu-item key="dashboard" @click="router.push('/doctor/dashboard')">数据概览</a-menu-item>
-        <a-menu-item key="tasks"     @click="router.push('/doctor/tasks')">任务管理</a-menu-item>
-        <a-menu-item key="patients"  @click="router.push('/doctor/patients')">患者管理</a-menu-item>
+        <a-menu-item key="dashboard" @click="router.push('/admin/dashboard')">数据概览</a-menu-item>
+        <a-menu-item key="users"     @click="router.push('/admin/users')">用户管理</a-menu-item>
+        <a-menu-item key="doctors"   @click="router.push('/admin/doctors')">医生审核</a-menu-item>
+        <a-menu-item key="records"   @click="router.push('/admin/records')">训练记录审计</a-menu-item>
+        <a-menu-item key="chain"     @click="router.push('/admin/chain')">区块链状态</a-menu-item>
       </a-menu>
     </a-layout-sider>
     <a-layout>
       <a-layout-header class="header">
-        <span>欢迎，{{ userStore.realName || userStore.username }} 医生</span>
+        <span>欢迎，{{ userStore.realName || userStore.username }} 管理员</span>
         <a-button type="link" @click="logout">退出登录</a-button>
       </a-layout-header>
       <a-layout-content class="page-container">
@@ -39,12 +44,25 @@ const logout = () => {
 
 <style scoped>
 .logo {
-  color:#fff;
   text-align:center;
   padding:18px 0;
+  background:rgba(255,255,255,.05);
+}
+.logo .badge {
+  display:inline-block;
+  font-size:11px;
+  background:#ff4d4f;
+  color:#fff;
+  padding:2px 8px;
+  border-radius:10px;
+  letter-spacing:1px;
+  margin-bottom:6px;
+}
+.logo .title {
+  color:#fff;
   font-weight:600;
   letter-spacing:1px;
-  background:rgba(255,255,255,.05);
+  font-size:14px;
 }
 .header {
   background:#fff;

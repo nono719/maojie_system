@@ -1,10 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/store/user'
 
-// ADMIN 复用医生端布局（论文 4.2：管理员负责用户/系统管理，与医生端管理后台同一布局）
+// 角色对应首页（论文 4.2 三类角色）
 function homeForRole(role) {
-  if (role === 'DOCTOR' || role === 'ADMIN') return '/doctor'
-  if (role === 'USER') return '/patient'
+  if (role === 'ADMIN')  return '/admin'
+  if (role === 'DOCTOR') return '/doctor'
+  if (role === 'USER')   return '/patient'
   return '/login'
 }
 
@@ -19,9 +20,23 @@ const routes = [
   { path: '/register', component: () => import('@/views/Register.vue'), meta: { public: true } },
 
   {
+    path: '/admin',
+    component: () => import('@/layouts/AdminLayout.vue'),
+    meta: { roles: ['ADMIN'] },
+    children: [
+      { path: '', redirect: '/admin/dashboard' },
+      { path: 'dashboard', component: () => import('@/views/admin/Dashboard.vue') },
+      { path: 'users',     component: () => import('@/views/admin/Users.vue') },
+      { path: 'doctors',   component: () => import('@/views/admin/Doctors.vue') },
+      { path: 'records',   component: () => import('@/views/admin/Records.vue') },
+      { path: 'chain',     component: () => import('@/views/admin/Chain.vue') }
+    ]
+  },
+
+  {
     path: '/doctor',
     component: () => import('@/layouts/DoctorLayout.vue'),
-    meta: { roles: ['DOCTOR', 'ADMIN'] },
+    meta: { roles: ['DOCTOR'] },
     children: [
       { path: '', redirect: '/doctor/dashboard' },
       { path: 'dashboard', component: () => import('@/views/doctor/Dashboard.vue') },
