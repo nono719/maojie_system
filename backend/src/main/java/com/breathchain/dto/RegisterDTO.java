@@ -28,4 +28,7 @@ public class RegisterDTO {
     private String hospital;
     private String department;
     private String title;
+
+    /** 仅 USER 注册时可选：绑定的医生 user_id */
+    private Long doctorId;
 }

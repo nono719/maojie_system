@@ -162,7 +162,60 @@ public class AdminController {
         if (p == null) throw new BusinessException(ResultCode.NOT_FOUND);
         p.setCertified(1);
         doctorMapper.updateById(p);
+        // 同步启用对应账户
+        SysUser u = userMapper.selectById(p.getUserId());
+        if (u != null) {
+            u.setStatus(1);
+            userMapper.updateById(u);
+        }
         return Result.success();
+    }
+
+    @PutMapping("/doctors/{id}/reject")
+    public Result<Void> rejectDoctor(@PathVariable Long id) {
+        DoctorProfile p = doctorMapper.selectById(id);
+        if (p == null) throw new BusinessException(ResultCode.NOT_FOUND);
+        p.setCertified(-1);
+        doctorMapper.updateById(p);
+        SysUser u = userMapper.selectById(p.getUserId());
+        if (u != null) {
+            u.setStatus(0);
+            userMapper.updateById(u);
+        }
+        return Result.success();
+    }
+
+    // ---------- 修改用户信息 ----------
+    @PutMapping("/users/{id}")
+    public Result<SysUser> updateUser(@PathVariable Long id, @RequestBody SysUser body) {
+        SysUser exist = userMapper.selectById(id);
+        if (exist == null) throw new BusinessException(ResultCode.USER_NOT_FOUND);
+        // 限定可改字段（防越权改密码 / id / role 串改）
+        if (body.getRealName() != null) exist.setRealName(body.getRealName());
+        if (body.getPhone() != null)    exist.setPhone(body.getPhone());
+        if (body.getEmail() != null)    exist.setEmail(body.getEmail());
+        if (body.getWalletAddress() != null) exist.setWalletAddress(body.getWalletAddress());
+        // role 只能 ADMIN ↔ 自身角色之间的限定调整，且不能把自己降级（这里简化：role 可改但不能改自己）
+        if (body.getRole() != null && !exist.getRole().equals("ADMIN")) {
+            if (!"ADMIN".equals(body.getRole())) {  // 不允许升级为 ADMIN
+                exist.setRole(body.getRole());
+            }
+        }
+        if (body.getDoctorId() != null && "USER".equals(exist.getRole())) {
+            exist.setDoctorId(body.getDoctorId());
+        }
+        if (body.getStatus() != null && !"ADMIN".equals(exist.getRole())) {
+            exist.setStatus(body.getStatus());
+        }
+        userMapper.updateById(exist);
+        return Result.success(userMapper.selectById(id));
+    }
+
+    @GetMapping("/users/{id}")
+    public Result<SysUser> userDetail(@PathVariable Long id) {
+        SysUser u = userMapper.selectById(id);
+        if (u == null) throw new BusinessException(ResultCode.USER_NOT_FOUND);
+        return Result.success(u);
     }
 
     // ---------- 训练记录审计 ----------

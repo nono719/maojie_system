@@ -41,6 +41,54 @@ public class DoctorController {
         ));
     }
 
+    @GetMapping("/patients/{id}/detail")
+    public Map<String, Object> patientDetail(@PathVariable Long id) {
+        Long doctorId = SecurityUtils.currentUserId();
+        SysUser patient = userMapper.selectById(id);
+        if (patient == null || !"USER".equals(patient.getRole())) {
+            throw new com.breathchain.common.BusinessException(
+                com.breathchain.common.ResultCode.USER_NOT_FOUND);
+        }
+        if (patient.getDoctorId() == null || !patient.getDoctorId().equals(doctorId)) {
+            throw new com.breathchain.common.BusinessException(
+                com.breathchain.common.ResultCode.FORBIDDEN);
+        }
+
+        // 训练统计
+        List<TrainingRecord> records = recordMapper.selectList(
+            Wrappers.<TrainingRecord>lambdaQuery()
+                .eq(TrainingRecord::getUserId, id)
+                .orderByDesc(TrainingRecord::getCreateTime)
+        );
+        long total = records.size();
+        BigDecimal avgCompletion = BigDecimal.ZERO;
+        if (!records.isEmpty()) {
+            BigDecimal sum = BigDecimal.ZERO;
+            int n = 0;
+            for (TrainingRecord r : records) {
+                if (r.getCompletionRate() != null) { sum = sum.add(r.getCompletionRate()); n++; }
+            }
+            if (n > 0) avgCompletion = sum.divide(BigDecimal.valueOf(n), 1, java.math.RoundingMode.HALF_UP);
+        }
+        LocalDateTime lastActive = records.isEmpty() ? null : records.get(0).getCreateTime();
+
+        // 奖励
+        BigDecimal totalReward = rewardMapper.selectList(
+            Wrappers.<RewardRecord>lambdaQuery()
+                .eq(RewardRecord::getUserId, id)
+                .eq(RewardRecord::getStatus, "SUCCESS")
+        ).stream().map(RewardRecord::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("user", patient);
+        data.put("totalTrainings", total);
+        data.put("avgCompletion", avgCompletion);
+        data.put("lastActive", lastActive);
+        data.put("totalReward", totalReward);
+        data.put("recentRecords", records.stream().limit(10).toList());
+        return data;
+    }
+
     @GetMapping("/dashboard")
     public Result<Map<String, Object>> dashboard() {
         Long doctorId = SecurityUtils.currentUserId();

@@ -21,6 +21,9 @@ public enum ResultCode {
     USER_NOT_FOUND(1002, "用户不存在"),
     WRONG_PASSWORD(1003, "密码错误"),
     ACCOUNT_DISABLED(1004, "账户已停用"),
+    DOCTOR_PENDING_REVIEW(1005, "医生账户待管理员审核通过后才能登录"),
+    DOCTOR_REJECTED(1006, "医生注册申请被驳回"),
+    DOCTOR_NOT_FOUND(1007, "指定的医生不存在"),
 
     TASK_NOT_FOUND(2001, "训练任务不存在"),
     TASK_NOT_ASSIGNED(2002, "尚未分配该任务"),
