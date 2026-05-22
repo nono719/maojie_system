@@ -19,11 +19,15 @@ http.interceptors.request.use((config) => {
 http.interceptors.response.use(
   (res) => {
     const body = res.data
-    if (body && body.code !== undefined && body.code !== 0) {
-      message.error(body.message || '请求失败')
-      return Promise.reject(body)
+    // 兼容两种返回：Result<T> 包装 ({code,message,data}) 与 raw 对象/数组
+    if (body && typeof body === 'object' && 'code' in body) {
+      if (body.code !== 0) {
+        message.error(body.message || '请求失败')
+        return Promise.reject(body)
+      }
+      return body.data
     }
-    return body?.data
+    return body
   },
   (err) => {
     const status = err?.response?.status
