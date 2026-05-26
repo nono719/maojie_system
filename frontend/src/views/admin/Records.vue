@@ -9,6 +9,8 @@ const list = ref([])
 const detail = ref(null)
 const drawerOpen = ref(false)
 const loadingDetail = ref(false)
+const verifyOpen = ref(false)
+const verifyResult = ref(null)
 
 const load = async () => { list.value = await http.get('/admin/training-records') }
 
@@ -24,8 +26,8 @@ const openDetail = async (row) => {
 }
 
 const verify = async (id) => {
-  const r = await verifyOnChain(id)
-  message[r.verified ? 'success' : 'error'](r.verified ? '链上哈希一致' : '哈希校验失败 — 数据已被篡改')
+  verifyResult.value = await verifyOnChain(id)
+  verifyOpen.value = true
 }
 
 const copy = (text) => {
@@ -42,7 +44,7 @@ const columns = [
     customRender: ({ text }) => text != null ? `${text}%` : '-' },
   { title: '评分', dataIndex: 'score', width: 70 },
   { title: '上链', dataIndex: 'chainStatus', key: 'chainStatus', width: 80 },
-  { title: '哈希', dataIndex: 'dataHash', key: 'hash', width: 140 },
+  { title: '哈希', dataIndex: 'dataHash', key: 'hash', width: 360 },
   { title: '时间', dataIndex: 'createTime', width: 140,
     customRender: ({ text }) => dayjs(text).format('YYYY-MM-DD HH:mm') },
   { title: '操作', key: 'action', width: 160, fixed: 'right' }
@@ -70,7 +72,7 @@ onMounted(load)
             </a-tag>
           </template>
           <template v-else-if="column.key === 'hash'">
-            <code v-if="record.dataHash" style="font-size:12px;">{{ record.dataHash.slice(0,10) }}…{{ record.dataHash.slice(-6) }}</code>
+            <code v-if="record.dataHash" style="font-size:12px;word-break:break-all;white-space:normal;">{{ record.dataHash }}</code>
             <span v-else style="color:#bbb;">—</span>
           </template>
           <template v-else-if="column.key === 'action'">
@@ -114,10 +116,11 @@ onMounted(load)
           </a-descriptions>
 
           <div class="section-card-title">
-            链上信息
+            联盟链存证信息
             <a-tag v-if="detail.chainVerified === true" color="green" style="margin-left:8px;">✅ 链上一致</a-tag>
             <a-tag v-else-if="detail.chainVerified === false" color="red" style="margin-left:8px;">❌ 哈希不匹配</a-tag>
             <a-tag v-else color="default" style="margin-left:8px;">链不可用</a-tag>
+            <a-tag color="blue" style="margin-left:8px;">FISCO BCOS 联盟链</a-tag>
           </div>
           <a-descriptions :column="1" bordered size="small">
             <a-descriptions-item label="上链状态">
@@ -131,6 +134,12 @@ onMounted(load)
                 <a-button v-if="detail.record.dataHash" size="small" @click="copy(detail.record.dataHash)">复制</a-button>
               </div>
             </a-descriptions-item>
+            <a-descriptions-item label="链上真实哈希">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <code style="font-size:12px;word-break:break-all;flex:1;">{{ detail.chainDataHash || '—' }}</code>
+                <a-button v-if="detail.chainDataHash" size="small" @click="copy(detail.chainDataHash)">复制</a-button>
+              </div>
+            </a-descriptions-item>
             <a-descriptions-item label="区块链交易哈希">
               <div style="display:flex;align-items:center;gap:8px;">
                 <code style="font-size:12px;word-break:break-all;flex:1;">{{ detail.record.blockTxId || '—' }}</code>
@@ -141,5 +150,39 @@ onMounted(load)
         </template>
       </a-spin>
     </a-drawer>
+
+    <a-modal v-model:open="verifyOpen" title="联盟链校验结果" :footer="null" width="760">
+      <template v-if="verifyResult">
+        <a-alert
+          :type="verifyResult.verified === true ? 'success' : verifyResult.verified === false ? 'error' : 'warning'"
+          :message="verifyResult.verified === true ? '联盟链哈希一致' : verifyResult.verified === false ? '联盟链哈希不一致' : '无法读取联盟链真实哈希'"
+          :description="verifyResult.reason || '下方“链上真实哈希”为从 FISCO BCOS 联盟链合约实时查询出的值，可直接与前端/数据库哈希比较。'"
+          show-icon
+          style="margin-bottom: 16px;"
+        />
+        <a-descriptions :column="1" bordered size="small">
+          <a-descriptions-item label="链类型">联盟链（FISCO BCOS）</a-descriptions-item>
+          <a-descriptions-item label="记录ID">{{ verifyResult.recordId }}</a-descriptions-item>
+          <a-descriptions-item label="前端/数据库哈希">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <code style="font-size:12px;word-break:break-all;flex:1;">{{ verifyResult.localDataHash || verifyResult.dataHash || '—' }}</code>
+              <a-button v-if="verifyResult.localDataHash || verifyResult.dataHash" size="small" @click="copy(verifyResult.localDataHash || verifyResult.dataHash)">复制</a-button>
+            </div>
+          </a-descriptions-item>
+          <a-descriptions-item label="链上真实哈希">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <code style="font-size:12px;word-break:break-all;flex:1;">{{ verifyResult.onChainDataHash || '—' }}</code>
+              <a-button v-if="verifyResult.onChainDataHash" size="small" @click="copy(verifyResult.onChainDataHash)">复制</a-button>
+            </div>
+          </a-descriptions-item>
+          <a-descriptions-item label="区块链交易哈希">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <code style="font-size:12px;word-break:break-all;flex:1;">{{ verifyResult.blockTxId || '—' }}</code>
+              <a-button v-if="verifyResult.blockTxId" size="small" @click="copy(verifyResult.blockTxId)">复制</a-button>
+            </div>
+          </a-descriptions-item>
+        </a-descriptions>
+      </template>
+    </a-modal>
   </div>
 </template>

@@ -9,6 +9,8 @@ const patients = ref([])
 const drawerOpen = ref(false)
 const detail = ref(null)
 const loadingDetail = ref(false)
+const verifyOpen = ref(false)
+const verifyResult = ref(null)
 
 const openDetail = async (row) => {
   drawerOpen.value = true
@@ -22,8 +24,14 @@ const openDetail = async (row) => {
 }
 
 const verifyRecord = async (id) => {
-  const r = await verifyOnChain(id)
-  message[r.verified ? 'success' : 'error'](r.verified ? '链上哈希一致' : '哈希校验失败')
+  verifyResult.value = await verifyOnChain(id)
+  verifyOpen.value = true
+}
+
+const copy = (text) => {
+  if (!text) return
+  navigator.clipboard?.writeText(text)
+  message.success('已复制')
 }
 
 const columns = [
@@ -107,5 +115,33 @@ onMounted(async () => { patients.value = await myPatients() })
         </template>
       </a-spin>
     </a-drawer>
+
+    <a-modal v-model:open="verifyOpen" title="联盟链校验结果" :footer="null" width="760">
+      <template v-if="verifyResult">
+        <a-alert
+          :type="verifyResult.verified === true ? 'success' : verifyResult.verified === false ? 'error' : 'warning'"
+          :message="verifyResult.verified === true ? '联盟链哈希一致' : verifyResult.verified === false ? '联盟链哈希不一致' : '无法读取联盟链真实哈希'"
+          :description="verifyResult.reason || '下方“链上真实哈希”为从 FISCO BCOS 联盟链合约实时查询出的值，可直接与前端/数据库哈希比较。'"
+          show-icon
+          style="margin-bottom: 16px;"
+        />
+        <a-descriptions :column="1" bordered size="small">
+          <a-descriptions-item label="链类型">联盟链（FISCO BCOS）</a-descriptions-item>
+          <a-descriptions-item label="记录ID">{{ verifyResult.recordId }}</a-descriptions-item>
+          <a-descriptions-item label="前端/数据库哈希">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <code style="font-size:12px;word-break:break-all;flex:1;">{{ verifyResult.localDataHash || verifyResult.dataHash || '—' }}</code>
+              <a-button v-if="verifyResult.localDataHash || verifyResult.dataHash" size="small" @click="copy(verifyResult.localDataHash || verifyResult.dataHash)">复制</a-button>
+            </div>
+          </a-descriptions-item>
+          <a-descriptions-item label="联盟链真实哈希">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <code style="font-size:12px;word-break:break-all;flex:1;">{{ verifyResult.onChainDataHash || '—' }}</code>
+              <a-button v-if="verifyResult.onChainDataHash" size="small" @click="copy(verifyResult.onChainDataHash)">复制</a-button>
+            </div>
+          </a-descriptions-item>
+        </a-descriptions>
+      </template>
+    </a-modal>
   </div>
 </template>

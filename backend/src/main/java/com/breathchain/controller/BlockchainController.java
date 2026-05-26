@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -36,13 +37,21 @@ public class BlockchainController {
                 "verified", false, "reason", "记录尚未上链"
             ));
         }
-        boolean ok = blockchainService.verifyRecord(record.getId(), record.getDataHash());
-        return Result.success(Map.of(
-            "recordId", record.getId(),
-            "dataHash", record.getDataHash(),
-            "blockTxId", record.getBlockTxId(),
-            "verified", ok
-        ));
+        String localHash = record.getDataHash();
+        String onChainHash = blockchainService.queryRecordHash(record.getId());
+        Boolean verified = onChainHash == null ? null : onChainHash.equalsIgnoreCase(localHash);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("recordId", record.getId());
+        data.put("localDataHash", localHash);
+        data.put("dataHash", localHash);
+        data.put("onChainDataHash", onChainHash);
+        data.put("blockTxId", record.getBlockTxId());
+        data.put("verified", verified);
+        if (onChainHash == null) {
+            data.put("reason", "无法读取链上真实哈希，请检查区块链节点或合约配置");
+        }
+        return Result.success(data);
     }
 
     @GetMapping("/balance/{address}")

@@ -15,6 +15,7 @@ import com.breathchain.mapper.DoctorProfileMapper;
 import com.breathchain.mapper.RewardRecordMapper;
 import com.breathchain.mapper.SysUserMapper;
 import com.breathchain.mapper.TrainingRecordMapper;
+import com.breathchain.service.BlockchainService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -39,6 +40,7 @@ public class AdminController {
     private final BreathingTaskMapper taskMapper;
     private final TrainingRecordMapper recordMapper;
     private final RewardRecordMapper rewardMapper;
+    private final BlockchainService blockchainService;
     private final Web3j web3j;
     private final Credentials serviceCredentials;
     private final Web3jConfig web3Config;
@@ -254,39 +256,22 @@ public class AdminController {
         SysUser u = userMapper.selectById(r.getUserId());
         BreathingTask t = taskMapper.selectById(r.getTaskId());
 
-        // 顺带查链上一致性
+        // 顺带查链上真实哈希
         Boolean verified = null;
-        try {
-            if (r.getDataHash() != null) {
-                org.web3j.abi.datatypes.Function fn = new org.web3j.abi.datatypes.Function(
-                    "verifyRecord",
-                    java.util.List.of(
-                        new org.web3j.abi.datatypes.generated.Uint256(java.math.BigInteger.valueOf(r.getId())),
-                        new org.web3j.abi.datatypes.generated.Bytes32(org.web3j.utils.Numeric.hexStringToByteArray(r.getDataHash()))
-                    ),
-                    java.util.List.of(new org.web3j.abi.TypeReference<org.web3j.abi.datatypes.Bool>() {})
-                );
-                String encoded = org.web3j.abi.FunctionEncoder.encode(fn);
-                org.web3j.protocol.core.methods.response.EthCall response = web3j.ethCall(
-                    org.web3j.protocol.core.methods.request.Transaction.createEthCallTransaction(
-                        serviceCredentials.getAddress(),
-                        web3Config.getTrainingRecordAddress(),
-                        encoded),
-                    org.web3j.protocol.core.DefaultBlockParameterName.LATEST
-                ).send();
-                if (!response.hasError()) {
-                    java.util.List<org.web3j.abi.datatypes.Type> decoded =
-                        org.web3j.abi.FunctionReturnDecoder.decode(response.getValue(), fn.getOutputParameters());
-                    if (!decoded.isEmpty()) verified = (Boolean) decoded.get(0).getValue();
-                }
+        String chainDataHash = null;
+        if (r.getDataHash() != null) {
+            chainDataHash = blockchainService.queryRecordHash(r.getId());
+            if (chainDataHash != null) {
+                verified = chainDataHash.equalsIgnoreCase(r.getDataHash());
             }
-        } catch (Exception ex) { /* 链不通时 verified 保持 null */ }
+        }
 
         Map<String, Object> data = new HashMap<>();
         data.put("record", r);
         data.put("user", u);
         data.put("task", t);
         data.put("chainVerified", verified);
+        data.put("chainDataHash", chainDataHash);
         return data;
     }
 

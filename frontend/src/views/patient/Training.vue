@@ -156,22 +156,26 @@ loadTask()
         </div>
 
         <div class="result-block">
-          <div class="block-title">上链信息</div>
+          <div class="block-title">联盟链存证信息</div>
           <div class="reward-row">
-            <span class="key">记录ID</span>
+            <span class="key">联盟链记录ID</span>
             <span class="val">#{{ result.recordId }}</span>
           </div>
           <div class="reward-row">
-            <span class="key">上链状态</span>
+            <span class="key">联盟链状态</span>
             <a-tag :color="result.chainStatus === 'SUCCESS' ? 'green' : 'orange'">{{ result.chainStatus }}</a-tag>
           </div>
           <div class="reward-row">
-            <span class="key">数据哈希</span>
-            <code class="hash">{{ result.dataHash?.slice(0, 22) }}...</code>
+            <span class="key">链类型</span>
+            <span class="val">FISCO BCOS 联盟链</span>
+          </div>
+          <div class="reward-row">
+            <span class="key">联盟链存证哈希</span>
+            <code class="hash">{{ result.dataHash || '—' }}</code>
           </div>
           <div class="reward-row" v-if="result.blockTxId">
-            <span class="key">交易哈希</span>
-            <code class="hash">{{ result.blockTxId.slice(0, 22) }}...</code>
+            <span class="key">联盟链交易哈希</span>
+            <code class="hash">{{ result.blockTxId }}</code>
           </div>
         </div>
       </div>
@@ -254,12 +258,21 @@ loadTask()
   letter-spacing: 0.5px;
 }
 .reward-row {
-  display: flex; justify-content: space-between; align-items: center;
+  display: flex; justify-content: space-between; align-items: flex-start;
   padding: 6px 0; font-size: 14px;
+  gap: 12px;
 }
 .reward-row .key { color: var(--color-text-light); }
 .reward-row .val { font-weight: 600; color: var(--color-text); }
-.hash { font-family: ui-monospace, monospace; font-size: 12px; color: var(--brand-primary); }
+.hash {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--brand-primary);
+  flex: 1;
+  text-align: right;
+  word-break: break-all;
+  white-space: normal;
+}
 .reasons {
   margin-top: 8px;
   padding: 8px 12px;

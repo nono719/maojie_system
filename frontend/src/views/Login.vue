@@ -31,7 +31,7 @@ const onSubmit = async () => {
       <div class="brand">
         <div class="logo" />
         <h1>BreathChain</h1>
-        <p>基于区块链的呼吸训练干预系统</p>
+        <p>基于 FISCO BCOS 联盟链的呼吸训练干预系统</p>
       </div>
       <a-form :model="form" layout="vertical" @finish="onSubmit">
         <a-form-item label="用户名" name="username">

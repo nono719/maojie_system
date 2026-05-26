@@ -12,10 +12,8 @@ const columns = [
   { title: '呼吸次数', dataIndex: 'breathCount' },
   { title: '完成率', dataIndex: 'completionRate', customRender: ({ text }) => `${text}%` },
   { title: '评分', dataIndex: 'score' },
-  { title: '上链状态', dataIndex: 'chainStatus' },
-  { title: '链上交易', dataIndex: 'blockTxId',
-    customRender: ({ text }) => text ? `${text.slice(0, 8)}...${text.slice(-6)}` : '-'
-  }
+  { title: '联盟链状态', dataIndex: 'chainStatus' },
+  { title: '联盟链交易哈希', dataIndex: 'blockTxId', width: 420 }
 ]
 
 onMounted(async () => { list.value = await myHistory() })
@@ -24,6 +22,20 @@ onMounted(async () => { list.value = await myHistory() })
 <template>
   <div>
     <h2 style="margin-bottom:16px;">训练历史</h2>
-    <a-table :columns="columns" :data-source="list" row-key="id" />
+    <a-alert
+      type="info"
+      show-icon
+      style="margin-bottom:16px;"
+      message="当前训练记录已写入 FISCO BCOS 联盟链"
+      description="下表中的联盟链交易哈希对应训练记录存证交易，可用于管理员端进一步校验链上真实哈希。"
+    />
+    <a-table :columns="columns" :data-source="list" row-key="id" :scroll="{ x: 1200 }">
+      <template #bodyCell="{ column, text }">
+        <template v-if="column.dataIndex === 'blockTxId'">
+          <code v-if="text" style="font-size:12px;word-break:break-all;white-space:normal;">{{ text }}</code>
+          <span v-else>-</span>
+        </template>
+      </template>
+    </a-table>
   </div>
 </template>

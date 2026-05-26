@@ -34,6 +34,11 @@ public interface BlockchainService {
     boolean verifyRecord(Long recordId, String expectedHash);
 
     /**
+     * 读取链上存储的训练记录哈希；记录不存在或链不可用时返回 null
+     */
+    String queryRecordHash(Long recordId);
+
+    /**
      * 查询某地址的代币余额（最小单位）
      */
     BigInteger queryBalance(String address);

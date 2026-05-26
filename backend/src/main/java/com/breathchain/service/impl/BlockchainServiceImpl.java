@@ -133,6 +133,35 @@ public class BlockchainServiceImpl implements BlockchainService {
     }
 
     @Override
+    @SuppressWarnings("rawtypes")
+    public String queryRecordHash(Long recordId) {
+        if (!blockchainProps.isEnabled()) return null;
+        Function fn = new Function(
+            "getRecord",
+            Collections.singletonList(new Uint256(BigInteger.valueOf(recordId))),
+            Arrays.asList(
+                new TypeReference<Uint256>() {},
+                new TypeReference<Uint256>() {},
+                new TypeReference<Uint256>() {},
+                new TypeReference<Uint256>() {},
+                new TypeReference<Uint256>() {},
+                new TypeReference<Uint256>() {},
+                new TypeReference<Bytes32>() {}
+            )
+        );
+        try {
+            List<Type> decoded = call(blockchainProps.getTrainingRecordAddress(), fn);
+            if (decoded.size() < 7) return null;
+            byte[] rawHash = (byte[]) decoded.get(6).getValue();
+            return Numeric.toHexString(rawHash);
+        } catch (BusinessException ex) {
+            log.warn("queryRecordHash failed for recordId={}: {}", recordId, ex.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    @SuppressWarnings("rawtypes")
     public BigInteger queryBalance(String address) {
         if (!blockchainProps.isEnabled()) return BigInteger.ZERO;
         Function fn = new Function(
@@ -188,7 +217,14 @@ public class BlockchainServiceImpl implements BlockchainService {
         }
     }
 
+    @SuppressWarnings("rawtypes")
     private boolean callBoolean(String contractAddress, Function fn) {
+        List<Type> decoded = call(contractAddress, fn);
+        return !decoded.isEmpty() && (Boolean) decoded.get(0).getValue();
+    }
+
+    @SuppressWarnings("rawtypes")
+    private List<Type> call(String contractAddress, Function fn) {
         try {
             String encoded = FunctionEncoder.encode(fn);
             EthCall response = web3j.ethCall(
@@ -199,12 +235,11 @@ public class BlockchainServiceImpl implements BlockchainService {
             if (response.hasError()) {
                 throw new BusinessException(ResultCode.BLOCKCHAIN_ERROR, response.getError().getMessage());
             }
-            List<Type> decoded = FunctionReturnDecoder.decode(response.getValue(), fn.getOutputParameters());
-            return !decoded.isEmpty() && (Boolean) decoded.get(0).getValue();
+            return FunctionReturnDecoder.decode(response.getValue(), fn.getOutputParameters());
         } catch (BusinessException be) {
             throw be;
         } catch (Exception ex) {
-            log.error("callBoolean to {} failed", contractAddress, ex);
+            log.error("call to {} failed", contractAddress, ex);
             throw new BusinessException(ResultCode.BLOCKCHAIN_ERROR, ex.getMessage());
         }
     }

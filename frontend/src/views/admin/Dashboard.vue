@@ -24,7 +24,7 @@ onMounted(async () => {
       <StatCard label="📝 训练任务"   :value="stats.taskCount" accent="linear-gradient(135deg, #faad14, #d48806)" />
       <StatCard label="📋 训练记录"   :value="stats.recordCount" accent="linear-gradient(135deg, #722ed1, #531dab)" />
       <StatCard label="🪙 累计发奖" :value="stats.totalRewards" suffix=" BREATH" accent="linear-gradient(135deg, #fa8c16, #d46b08)" />
-      <StatCard label="⛓ 链上区块"  :value="stats.chainBlock" accent="linear-gradient(135deg, #13c2c2, #08979c)" />
+      <StatCard label="⛓ 联盟链区块"  :value="stats.chainBlock" accent="linear-gradient(135deg, #13c2c2, #08979c)" />
     </div>
 
     <div class="section-card">
